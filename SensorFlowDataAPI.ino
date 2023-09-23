@@ -2,11 +2,11 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
-unsigned long startTime = 0;        // Start time of water measurement
-unsigned long elapsedTime = 0;      // Elapsed time in milliseconds
-unsigned long interval = 60;    //  minutes in milliseconds cout waterflow
+unsigned long startTime = 0;        // inicio de tiempo y medicion
+unsigned long elapsedTime = 0;      // tiempo transcurrido milisegundos
+unsigned long interval = 60;    
 //**********************************************************************************
-//Conection WiFi
+//coneccion WiFi
 const char* ssid="NAME_MODEM";
 const char* password="YOUADRESS";
 //server URL
@@ -15,34 +15,34 @@ const char* ServerUrl="https://us-east-1.aws.data.mongodb-api.com/app/applicatio
 const char* PutServerUrl="TOUR_ENDPOINT_METHOD_PUT";
 //**
 int relayPin =17;  
-volatile int NumPulsos; //variable for the number of received pulses
-int PinSensor = 27;    //Sensor connected to pin 2
-float factor_conversion=7.5; //to convert from frequency to flow
+volatile int NumPulsos; //numeros de pulsos recibidos
+int PinSensor = 27;    //semsor conectado pin2
+float factor_conversion=7.5; //para convertir de frecuencia a flujo
 float volumen=0;
-long dt=0; //time variation for each loop
-long t0=0; //millis() del bucle anterior
+long dt=0; //
+long t0=0; //
 int contador=0;
 bool relayActive;
 int getRelay;
 StaticJsonDocument<100> doc;
 void ContarPulsos ()  
 { 
-  NumPulsos++;  //we increase the pulse variable
+  NumPulsos++;  //incremento de la variable flojo
 } 
 int ObtenerFrecuecia() 
 {
   int frecuencia;
-  NumPulsos = 0;   //We set the number of pulses to 0
-  interrupts();    //We enable interruptions
+  NumPulsos = 0;   //establecemos la variable pulso en 0
+  interrupts();    //habiltar interrupciones
   delay(1000);   //muestra de 1 segundo
-  noInterrupts(); //We disable interruptions
+  noInterrupts(); //
   frecuencia=NumPulsos; //Hz(pulsos por segundo)
   return frecuencia;
 }
 void setup() {
    pinMode(relayPin, OUTPUT);
   pinMode(PinSensor, INPUT); 
-   //conection
+   //conexion
 Serial.begin(115200);
 WiFi.begin(ssid,password);
 delay(2000);
@@ -50,7 +50,7 @@ Serial.print("Se esta conectando a la red wif denominada...");
 Serial.print(ssid);
 while(WiFi.status()!= WL_CONNECTED){
   delay(500);
-  Serial.print("\n Connecting to Wi-Fi...");
+  Serial.print("\n conectando to Wi-Fi...");
 }
 //connection successful
 Serial.print(" \n");
@@ -70,7 +70,6 @@ Serial.println(getRelay);
 }
 
 void loop() {
-    // put your main code here, to run repeatedly:
     Serial.print ("\n PETICION GET para relay ");
     if(getRelay==0 ){
        Serial.print ("\n relay apagado: ");
@@ -87,8 +86,8 @@ void loop() {
     if(relayActive){
       
       while(interval >= contador){
-  float frecuencia=ObtenerFrecuecia(); //we obtain the frequency of the pulses in Hz
-  float caudal_L_m=frecuencia/factor_conversion; //We calculate the flow in L/m
+  float frecuencia=ObtenerFrecuecia(); //obtenemos la frecuencia de los pulsos en Hz
+  float caudal_L_m=frecuencia/factor_conversion; //calculo de caudal L/m
   dt=millis()-t0; //calculate time variance
   t0=millis();
   volumen=volumen+(caudal_L_m/60)*(dt/1000); // volumen(L)=caudal(L/s)*tiempo(s)
@@ -99,7 +98,7 @@ void loop() {
   Serial.print ("L/min\tVolumen: "); 
   Serial.print (volumen,3); 
   Serial.println (" L");
-  Serial.print("\n seconds active \t");
+  Serial.print("\n segundos activos \t");
   Serial.print(contador);
   contador++;
   delay(1000);
@@ -113,7 +112,7 @@ void loop() {
       doc["potenciometer"]=0;
       doc["relay"]=0;
       doc["liters"] = volumen;
-      Serial.println("\n Uploading dates.... ");
+      Serial.println("\n cargando datos.... ");
       PUTDATA();
       delay(5000);
       volumen=0;
@@ -121,30 +120,28 @@ void loop() {
     }
     
      if (digitalRead(relayPin) == HIGH && !relayActive) {
-    // Wait for the relay value to change to 1
+    // espera que en valor de relay cambie a 1
     while (digitalRead(relayPin) == HIGH) {
-      Serial.print ("\n Do get to get value from relay..... "); 
+      Serial.print ("\n hacer get to obtener valor por relay..... "); 
       getRelay=MGetRelay();
-      Serial.println("\n getrelay value inside while: ");
+      Serial.println("\n getrelay valor dentro while: ");
       Serial.println(getRelay);
       delay(10000);
       if(getRelay==1){
-      Serial.print ("\n relay on: ");
+      Serial.print ("\n relay encendido: ");
       digitalWrite(relayPin, LOW);
       relayActive=true;
       }
     }
   }
-  Serial.print ("\n We got out of the wait and it was paid .... "); 
+  Serial.print ("\n salimos de la espera ya depues del pago .... "); 
    delay(1000);
 }
 
 
 int MGetRelay(){
   HTTPClient http;
-// Specify the URL to make the GET request to
   http.begin(ServerUrl);
-  //code
   int httpResponseCode = http.GET();
   //store Get
   String payload = http.getString();
@@ -188,7 +185,7 @@ void PUTDATA(){
      if(httpResponseCode == 200){
       Serial.println("Data uploaded");
      }else{
-      Serial.println("ERROR : Couldn't uploat deata");
+      Serial.println("ERROR : nos de cargo los datos");
       Serial.print("\n HTTP response code: ");
        Serial.println(httpResponseCode);
      }
